@@ -2,129 +2,92 @@
 
 #include "stdafx.h"
 #include "Vector.h"
-#include "Renderer.h"
-#include "GDIHelper.h"
+
 struct Vertex
 {
 public:
 	Vertex() {}
-	Vertex(const Vector3& v, const ULONG& c) : position(v), color(c) {}
+	Vertex(Vector3 v) { position = v; }
 	Vector3 position;
 	ULONG color;
+	Vector2 uv;
 };
 
 struct Triangle
 {
-private:
-	Vertex vertices[3];
-	float xMin, xMax, yMin, yMax;
-	Vector2 u, v, w;
-	float invDenom;
-	float dotUU, dotUV, dotVV;
 public:
 	Triangle() {}
-	Triangle(const Vertex& v1, const Vertex& v2, const Vertex v3) {
-		vertices[0] = v1;
-		vertices[1] = v2;
-		vertices[2] = v3;
-	}
+	Triangle(Vertex vert1, Vertex vert2, Vertex vert3)
+	{
+		vt[0] = vert1;
+		vt[1] = vert2;
+		vt[2] = vert3;
 
-	void drawTriangle() {
+		sbbMin = Vector2(INFINITY, INFINITY);
+		sbbMax = Vector2(-INFINITY, -INFINITY);
 
-		calculate();
-		int x, y;
-
-		for (y = RoundToInt(yMin); y < RoundToInt(yMax); y++) {
-			for (x = RoundToInt(xMin); x < RoundToInt(xMax); x++) {
-				if (IsInTriangle(x, y)) {
-					float distToVertex1 = Vector3(x, y, 1.0f).DistTo(vertices[0].position);
-					float distToVertex2 = Vector3(x, y, 1.0f).DistTo(vertices[1].position);
-					float distToVertex3 = Vector3(x, y, 1.0f).DistTo(vertices[2].position);
-					
-					ULONG cur, tar;
-					Vector2 dVector = getMin(distToVertex1, distToVertex2, distToVertex3);
-					
-					if (dVector.X == distToVertex1) cur = vertices[0].color;
-					if (dVector.X == distToVertex2) cur = vertices[1].color;
-					if (dVector.X == distToVertex3) cur = vertices[2].color;
-
-					if (dVector.Y == distToVertex1) tar = vertices[0].color;
-					if (dVector.Y == distToVertex2) tar = vertices[1].color;
-					if (dVector.Y == distToVertex3) tar = vertices[2].color;
-
-					ULONG rgb = Interpolation(cur, tar, 0.5);
-					int b, g, r;
-					b = rgb >> 16 & 255;
-					g = rgb >> 8 & 255;
-					r = rgb >> 0 & 255;
-					
-					SetColor(r, g, b);
-					PutPixel(IntPoint(x, y));
-				}
-			}
+		for (int i = 0; i < 3; i++)
+		{
+			Vector3 t = vt[i].position;
+			if (t.X < sbbMin.X) sbbMin.X = t.X;
+			if (t.Y < sbbMin.Y) sbbMin.Y = t.Y;
+			if (t.X > sbbMax.X) sbbMax.X = t.X;
+			if (t.Y > sbbMax.Y) sbbMax.Y = t.Y;
 		}
-	}
-private:
 
-	void calculate() {
-		xMin = yMin = INFINITY;
-		xMax = yMax = -INFINITY;
-
-		// xMin operating
-		if (vertices[0].position.X < xMin) xMin = vertices[0].position.X;
-		if (vertices[1].position.X < xMin) xMin = vertices[1].position.X;
-		if (vertices[2].position.X < xMin) xMin = vertices[2].position.X;
-		// xMax operating
-		if (vertices[0].position.X > xMax) xMax = vertices[0].position.X;
-		if (vertices[1].position.X > xMax) xMax = vertices[1].position.X;
-		if (vertices[2].position.X > xMax) xMax = vertices[2].position.X;
-		// yMin operating
-		if (vertices[0].position.Y < yMin) yMin = vertices[0].position.Y;
-		if (vertices[1].position.Y < yMin) yMin = vertices[1].position.Y;
-		if (vertices[2].position.Y < yMin) yMin = vertices[2].position.Y;
-		// yMax operating
-		if (vertices[0].position.Y > yMax) yMax = vertices[0].position.Y;
-		if (vertices[1].position.Y > yMax) yMax = vertices[1].position.Y;
-		if (vertices[2].position.Y > yMax) yMax = vertices[2].position.Y;
-
-		// Vector operating
-		u = (vertices[1].position - vertices[0].position).ToVector2();
-		v = (vertices[2].position - vertices[0].position).ToVector2();
-		// dot operating
+		u = (vt[1].position - vt[0].position).ToVector2();
+		v = (vt[2].position - vt[0].position).ToVector2();
 		dotUU = u.Dot(u);
 		dotUV = u.Dot(v);
 		dotVV = v.Dot(v);
-		// invDenom[ºÐ¸ð] operating
 		invDenom = 1.0f / (dotUU * dotVV - dotUV * dotUV);
 	}
 
-	bool IsInTriangle(int x, int y) {
-		w = (Vector3((float)x, (float)y, 0.0f) - vertices[0].position).ToVector2();
+	Vertex vt[3];
+
+	Vector2 u;
+	Vector2 v;
+	Vector2 sbbMin;
+	Vector2 sbbMax;
+	float dotUU, dotUV, dotVV;
+	float invDenom;
+
+	void CalcBaryCentricCoord(Vector3 target, float *outS, float *outT) 
+	{
+		Vector2 w = (target - vt[0].position).ToVector2();
 		float dotUW = u.Dot(w);
 		float dotVW = v.Dot(w);
-		float outS = (dotVV * dotUW - dotUV * dotVW) * invDenom;
-		float outT = (dotUU * dotVW - dotUV * dotUW) * invDenom;
-		if (outS < 0.0f || outT < 0.0f) return false;
-		if (outS + outT > 1.0f) return false;
+		*outS = (dotVV * dotUW - dotUV * dotVW) * invDenom;
+		*outT = (dotUU * dotVW - dotUV * dotUW) * invDenom;
+	}
 
+	bool IsInTrianble(float s, float t)
+	{
+		if (s < 0.0f) return false;
+		if (t < 0.0f) return false;
+		if (s + t > 1.0f) return false;
 		return true;
 	}
 
-	Vector2 getMin(float d1, float d2, float d3) {
+	ULONG GetPixelColor(Vector3 target, float s, float t)
+	{
+		BYTE RV0 = GetRValue(vt[0].color);
+		BYTE RV1 = GetRValue(vt[1].color);
+		BYTE RV2 = GetRValue(vt[2].color);
 
-		float first, second;
-		if (d1 < d2) first = d1;
-		else first = d2;
+		BYTE GV0 = GetGValue(vt[0].color);
+		BYTE GV1 = GetGValue(vt[1].color);
+		BYTE GV2 = GetGValue(vt[2].color);
 
-		if (d2 < d3) {
-			second = d2;
-			first = d1;
-		}
-		else {
-			second = first;
-			first = d3;
-		}
-		return Vector2(first, second);
+		BYTE BV0 = GetBValue(vt[0].color);
+		BYTE BV1 = GetBValue(vt[1].color);
+		BYTE BV2 = GetBValue(vt[2].color);
+
+		BYTE FinalR = RoundToInt(RV0 * (1.0f - s - t) + RV1 * s + RV2 * t);
+		BYTE FinalG = RoundToInt(GV0 * (1.0f - s - t) + GV1 * s + GV2 * t);
+		BYTE FinalB = RoundToInt(BV0 * (1.0f - s - t) + BV1 * s + BV2 * t);
+		return RGB(FinalB, FinalG, FinalR);
 	}
+
 };
 

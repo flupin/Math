@@ -1,7 +1,6 @@
 #pragma once
-#include "Vector.h"
-#include "stdafx.h"
 
+void InitFrame(void);
 void UpdateFrame(void);
+void PutPixel(int x, int y);
 void PutPixel(IntPoint pt);
-ULONG Interpolation(ULONG current, ULONG Target, float alpha);
