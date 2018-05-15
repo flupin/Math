@@ -1,3 +1,15 @@
-﻿  Renderer.cpp
-  SoftRenderer.vcxproj -> C:\Users\marks\Documents\GitHub\math\math\x64\Debug\SoftRenderer.exe
-  SoftRenderer.vcxproj -> C:\Users\marks\Documents\GitHub\math\math\x64\Debug\SoftRenderer.pdb (Partial PDB)
+﻿  stdafx.cpp
+  Bmp.cpp
+  GDIHelper.cpp
+  Matrix.cpp
+  Mesh.cpp
+  Renderer.cpp
+  SoftRenderer.cpp
+  Texture.cpp
+  Triangle.cpp
+  Vector.cpp
+  코드를 생성하고 있습니다...
+Renderer.obj : error LNK2019: "public: void __cdecl TextureShader::Render(struct Mesh *)" (?Render@TextureShader@@QEAAXPEAUMesh@@@Z) 외부 기호(참조 위치: "public: void __cdecl Sprite::Render(struct Mesh *)" (?Render@Sprite@@QEAAXPEAUMesh@@@Z) 함수)에서 확인하지 못했습니다.
+Renderer.obj : error LNK2019: "public: void __cdecl TextureShader::SetTexture(class Texture *)" (?SetTexture@TextureShader@@QEAAXPEAVTexture@@@Z) 외부 기호(참조 위치: "public: void __cdecl Sprite::SetTexture(class Texture *)" (?SetTexture@Sprite@@QEAAXPEAVTexture@@@Z) 함수)에서 확인하지 못했습니다.
+Renderer.obj : error LNK2019: "public: void __cdecl TextureShader::SetWorldMatrix(struct Matrix3)" (?SetWorldMatrix@TextureShader@@QEAAXUMatrix3@@@Z) 외부 기호(참조 위치: "public: void __cdecl Sprite::SetMatrix(struct Matrix3)" (?SetMatrix@Sprite@@QEAAXUMatrix3@@@Z) 함수)에서 확인하지 못했습니다.
+C:\Users\marks\Documents\GitHub\math\math\x64\Debug\SoftRenderer.exe : fatal error LNK1120: 3개의 확인할 수 없는 외부 참조입니다.

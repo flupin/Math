@@ -21,7 +21,6 @@ public:
 	void SetScale(float a, float b)
 	{
 		SetIdentity();
-		// Add Code Here
 		_11 = a;
 		_22 = b;
 	}

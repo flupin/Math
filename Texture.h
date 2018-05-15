@@ -14,6 +14,7 @@ public:
 	bool LoadBMP(char* filename);
 	ULONG GetPixel(int x, int y);
 	ULONG GetTexturePixel(float s, float t, const Triangle& tri);
+	ULONG GetTexturePixel(const Vector2 uv);
 
 	int width;
 	int height;		

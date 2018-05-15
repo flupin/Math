@@ -34,7 +34,7 @@ public:
 
 	IntPoint ToIntPoint() 
 	{
-		return IntPoint(RoundToInt(X), RoundToInt(Y));
+		return IntPoint((int)(X), (int)(Y));
 	}
 
 	float Dot(const Vector2 v) const
