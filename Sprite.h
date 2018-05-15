@@ -8,12 +8,19 @@ class Sprite
 {
 private:
 	TextureShader * shader;
-
+	Mesh *mesh;
 public:
 	Sprite() { shader = new TextureShader; }
 
 	int drawLayer;
-
+	void set_mesh(Mesh* _mesh)
+	{
+		mesh = _mesh;
+	}
+	void Render()
+	{
+		shader->Render(mesh);
+	}
 	void Render(Mesh* mesh)
 	{
 		shader->Render(mesh);

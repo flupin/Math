@@ -11,6 +11,44 @@
 #include <algorithm>
 using namespace std;
 
+Mesh set_plane_mesh(Vector2 _start, Vector2 _size)
+{
+	Mesh plane;
+	plane.vertexSize = 4;
+	plane.vertices = new Vertex[plane.vertexSize];
+
+	// left up
+	plane.vertices[0].position = Vector3(_start.X, _start.Y, 0.f);
+	plane.vertices[0].color = RGB(255, 255, 255);
+	plane.vertices[0].uv = Vector2(0.f, 0.f);
+
+	// right up
+	plane.vertices[1].position = Vector3(_start.X + _size.X, _start.Y, 0.f);
+	plane.vertices[1].color = RGB(255, 255, 255);
+	plane.vertices[1].uv = Vector2(1.f, 0.f);
+
+	// right bottom
+	plane.vertices[2].position = Vector3(_start.X + _size.X, _start.Y - _size.Y, 0.f);
+	plane.vertices[2].color = RGB(255, 255, 255);
+	plane.vertices[2].uv = Vector2(1.f, 1.f);
+
+	// left bottom
+	plane.vertices[3].position = Vector3(_start.X, _start.Y - _size.Y, 0.f);
+	plane.vertices[3].color = RGB(255, 255, 255);
+	plane.vertices[3].uv = Vector2(0.f, 1.f);
+
+	plane.indexSize = 6;
+	plane.indices = new unsigned int[plane.indexSize];
+	plane.indices[0] = 0;
+	plane.indices[1] = 1;
+	plane.indices[2] = 2;
+	plane.indices[3] = 2;
+	plane.indices[4] = 3;
+	plane.indices[5] = 0;
+
+	return plane;
+}
+
 bool IsInRange(int x, int y)
 {
 	return (abs(x) < (g_nClientWidth / 2)) && (abs(y) < (g_nClientHeight / 2));
@@ -44,29 +82,32 @@ void DrawLine(const Vector3& start, const Vector3& end)
 	}
 }
 
-Mesh mesh;
+Mesh bear_mesh;
+Mesh bono_mesh;
 
-Texture* bono_tex;
 Texture* bear_tex;
-Sprite bono_spr;
 Sprite bear_spr;
+Texture* bono_tex;
+Sprite bono_spr;
 Sprite** sprites;
 int spritesSize;
 
-void InitFrame(void)
+// initialize texture, sprite 
+void init_sprite()
 {
-	int vertexSize, indexSize;
-	// 텍스쳐 초기화
 	bear_tex = new Texture();
 	bear_tex->LoadBMP("test.bmp");
-	bono_tex = new Texture();
-	bono_tex->LoadBMP("est.bmp");
 
-	// 메테리얼 초기화
-	bear_spr.drawLayer = 1;
+	bono_tex = new Texture();
+	bono_tex->LoadBMP("bono.bmp");
+
+	bear_spr.drawLayer = 0;
 	bear_spr.SetTexture(bear_tex);
+	bear_spr.set_mesh(&bear_mesh);
+
 	bono_spr.drawLayer = 1;
 	bono_spr.SetTexture(bono_tex);
+	bono_spr.set_mesh(&bono_mesh);
 
 	spritesSize = 2;
 	sprites = new Sprite*[spritesSize];
@@ -74,62 +115,36 @@ void InitFrame(void)
 	sprites[1] = &bono_spr;
 
 	std::sort(sprites, sprites + spritesSize, Sprite::comp);
-
-	// 메쉬 초기화
-	// 점 생성
-	Vector3 p1, p2, p3, p4;
-
-	p1.SetPoint(-50.0f, 50.0f);
-	p2.SetPoint(50.0f, 50.0f);
-	p3.SetPoint(50.0f, -50.0f);
-	p4.SetPoint(-50.0f, -50.0f);
-
-	vertexSize = 4;
-	indexSize = 6;
-
-	// Vertex
-	mesh.vertexSize = vertexSize;
-	mesh.vertices = new Vertex[vertexSize];
-	mesh.vertices[0].position = p1;
-	mesh.vertices[0].uv = Vector2(0.125f, 0.125f);
-	mesh.vertices[0].color = RGB(255, 255, 255);
-
-	mesh.vertices[1].position = p2;
-	mesh.vertices[1].uv = Vector2(0.25f, 0.125f);
-	mesh.vertices[1].color = RGB(255, 255, 255);
-
-	mesh.vertices[2].position = p3;
-	mesh.vertices[2].uv = Vector2(0.25f, 0.25f);
-	mesh.vertices[2].color = RGB(255, 255, 255);
-
-	mesh.vertices[3].position = p4;
-	mesh.vertices[3].uv = Vector2(0.125f, 0.25f);
-	mesh.vertices[3].color = RGB(255, 255, 255);
-
-	// Index
-	mesh.indexSize = indexSize;
-	mesh.indices = new unsigned int[indexSize];
-	mesh.indices[0] = 0;
-	mesh.indices[1] = 1;
-	mesh.indices[2] = 2;
-	mesh.indices[3] = 2;
-	mesh.indices[4] = 3;
-	mesh.indices[5] = 0;
 }
+
+void InitFrame(void)
+{
+	bono_mesh = set_plane_mesh(Vector2(-100, 100), Vector2(200, 200));
+	bear_mesh = set_plane_mesh(Vector2(-50, 50), Vector2(100, 100));  
+	init_sprite();
+
+}
+
+// make and returned base option plane
 
 void UpdateFrame(void)
 {
+	// Buffer Clear
 	SetColor(32, 128, 255);
 	Clear();
 
-	static float pos = 0.0f;
+	static Vector2 pos;
 	static float angle = 0.0f;
 	static float scale = 1.0f;
 
-	if (GetAsyncKeyState(VK_LEFT)) pos -= 1.0f;
-	if (GetAsyncKeyState(VK_RIGHT)) pos += 1.0f;
-	if (GetAsyncKeyState(VK_UP)) angle += 1.0f;
-	if (GetAsyncKeyState(VK_DOWN)) angle -= 1.0f;
+	if (GetAsyncKeyState('A'))angle -= 1.0f;
+	if (GetAsyncKeyState('D'))angle += 1.0f;
+
+	if (GetAsyncKeyState(VK_LEFT)) pos.X -= 10.f;
+	if (GetAsyncKeyState(VK_RIGHT)) pos.X += 10.f;
+	if (GetAsyncKeyState(VK_UP)) pos.Y += 1.0f;
+	if (GetAsyncKeyState(VK_DOWN)) pos.Y -= 1.0f;
+
 	if (GetAsyncKeyState(VK_PRIOR)) scale *= 1.01f;
 	if (GetAsyncKeyState(VK_NEXT)) scale *= 0.99f;
 
@@ -138,15 +153,14 @@ void UpdateFrame(void)
 		bear_spr.drawLayer = 0;
 		std::sort(sprites, sprites + spritesSize, Sprite::comp);
 	}
-
 	if (GetAsyncKeyState(VK_NUMPAD2))
 	{
-		bono_spr.drawLayer = 2;
+		bear_spr.drawLayer = 2;
 		std::sort(sprites, sprites + spritesSize, Sprite::comp);
 	}
 
 	Matrix3 TMat, RMat, SMat;
-	TMat.SetTranslation(pos, 0.0f);
+	TMat.SetTranslation(pos.X, pos.Y);
 	RMat.SetRotation(angle);
 	SMat.SetScale(scale);
 	Matrix3 TRSMat = TMat * RMat * SMat;
@@ -155,7 +169,7 @@ void UpdateFrame(void)
 
 	for (int i = 0; i < spritesSize; i++)
 	{
-		sprites[i]->Render(&mesh);
+		sprites[i]->Render();
 	}
 
 	// Buffer Swap 
